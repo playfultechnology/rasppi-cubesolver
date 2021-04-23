@@ -4,7 +4,8 @@ A Raspberry Pi Rubik's cube solver
 ## Based on:
 - (Hardware) https://www.thingiverse.com/thing:3826740
 - (Software) https://github.com/DrVoHo/Rubik_solver
-However, with modifications to both. I found that the horns did not fit my 995 servos, and the software needed to be adjusted to use a servo controller.
+
+Modifications required to both. I found that the horns did not fit my 995 servos, and the software needed to be adjusted to use a servo controller.
 
 
 ## Build Instructions
