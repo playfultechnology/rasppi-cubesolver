@@ -16,22 +16,38 @@ A Raspberry Pi Rubik's cube solver
 (Can now log on remotely via Putty)
 
 2.) Upgrade to Python3
-python --version (will probably show Python 2.7.xx)
+```
+python --version
+```
+(will probably show Python 2.7.xx)
+```
 nano ~/.bashrc
+```
 Scroll down to the bottom of the file and add the following line:
+```
 alias python='/usr/bin/python3'
+```
 Save and Exit. Then execute the amended file
+```
 source ~/.bashrc
-python --version (should now show Python 3.7.xx)
+python --version
+```
+(should now show Python 3.7.xx)
 
 3.) Install Kociemba
+```
 sudo apt-get install libffi-dev
 sudo pip3 install kociemba
+```
 
 4.) Install Luma
+```
 sudo pip3 install luma.oled
+```
 
 5.) Install PCA9685 Driver
+```
 sudo pip3 install adafruit-pca9685
+```
 
 6.) Use FileZilla to copy over python files to Raspberry Pi. Also copy over the font https://www.dafont.com/vcr-osd-mono.font needs to be in the home directory.
