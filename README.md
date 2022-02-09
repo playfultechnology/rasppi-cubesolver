@@ -12,16 +12,14 @@ Modifications required to both. I found that the horns did not fit my 995 servos
 
 1.) Create a fresh install of Raspberry OS
 - Use Raspberry Pi imager (https://www.raspberrypi.org/software/) to download and install latest Raspberry OS on an SD card.
-- Using the cog icon, you can configure some settings which will save time in the next step - set the default username and password, enable SSH, set locale etc.
+- Using the cog icon, you can configure some settings which will save time in the next step - set the default username and password, enable SSH, set locale etc. I recommend enabling SSH at this stage, as that will allow you to remotely connect via Putty to configure the next steps, otherwise you will have to connect a monitor and copmuter keyboard to continue.
 
 ![](images/rpi_imager.jpg)
 
-
-- Need to connect monitor keyboard (can't connect remotely via putty until SSH is set up, which is next step)
-- Load command line
+- After installing the OS, place the SD card into the Raspberry Pi, and give it a few minutes to first boot up. If you enabled SSH, you can connect remotely via Putty to its IP address (or raspberrypi.local if you enabled the hostname). Otherwise, connect a screen and keyboard. The default credentials are pi/raspberry
 - sudo raspi-config
-- Enable SSH, I2C, and Camera
-(Can now log on remotely via Putty)
+- In interface options, Enable SSH (if not previously enabled in the imager), I2C, and (Legacy) Camera.
+- Save and allow the RaspPi to reboot itself
 
 2.) Upgrade to Python3
 ```
