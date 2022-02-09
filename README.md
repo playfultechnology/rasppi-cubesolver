@@ -12,6 +12,11 @@ Modifications required to both. I found that the horns did not fit my 995 servos
 
 1.) Create a fresh install of Raspberry OS
 - Use Raspberry Pi imager (https://www.raspberrypi.org/software/) to download and install latest Raspberry OS on an SD card.
+- Using the cog icon, you can configure some settings which will save time in the next step - set the default username and password, enable SSH, set locale etc.
+
+![](images/rpi_imager.jpg)
+
+
 - Need to connect monitor keyboard (can't connect remotely via putty until SSH is set up, which is next step)
 - Load command line
 - sudo raspi-config
