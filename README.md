@@ -46,6 +46,10 @@ sudo apt-get install libffi-dev
 sudo pip3 install kociemba
 ```
 
+|lib-ffi-dev|kociemba|
+|---|---|
+|![](images/putty_libffi-dev.jpg)|![](images/putty_kociemba.jpg)|
+
 4.) Install Luma
 ```
 sudo pip3 install luma.oled
