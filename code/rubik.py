@@ -30,16 +30,16 @@ device = ssd1306(serial)
 # Create PCA9685 controller object
 pwm = Adafruit_PCA9685.PCA9685(address=0x40)
 # Servo settings
-fPWM = 50   # Servo PWM Frequenz; 20 ms Dauer
+fPWM = 50   # Servo PWM Frequency; 20ms duration
 pwm.set_pwm_freq(fPWM)
-pwm_res=4096 + 200 # 200 little overshoot
+pwm_res = 4096 + 200 # 200 little overshoot
 # Load font
 HOME = "/home/pi/"
 font = ImageFont.truetype(HOME + 'VCR_OSD_MONO_1.001.ttf',20)
 
 
 with canvas(device) as draw:
-    draw.text((15, 15), "Boot ",font = font, fill="white")
+    draw.text((15, 15), "Boot ", font = font, fill="white")
 
 
 # CONSTANTS
@@ -85,8 +85,8 @@ SERVO_OFFSET_right_turn = 2 # lower servo position in percentage of duration
 
 SCRAMBLE_MAX = 20
 
-IMG_BREITE = 1080 
-IMG_HOEHE = 1080
+IMG_BREITE = 1080 # Width
+IMG_HOEHE = 1080 # Height
 
 top_row_pxl = 250  #values for cube detection
 mid_row_pxl = 500
@@ -1298,8 +1298,8 @@ def setup():
         f.write(str(SLEEP)+ "\n")
         f.write(str(regrip_stat)+ "\n")
         f.close()
-        print("Default gesichert")
-        return False  #beim ersten Durchgang werden alle Servos auf 0 gestellt damit die Arme richtig montiert werden kxnnen
+        print("Default saved")
+        return False  #During the first run, all servos are set to 0 so that the arms can be mounted correctly 
 
 #_________________________________________Scan_cube_Own_Pattern________________________________
 
