@@ -37,99 +37,89 @@ pwm_res = 4096 + 200 # 200 little overshoot
 HOME = "/home/pi/"
 font = ImageFont.truetype(HOME + 'VCR_OSD_MONO_1.001.ttf',20)
 
-
+# Display startup message on screen
 with canvas(device) as draw:
     draw.text((15, 15), "Boot ", font = font, fill="white")
 
-
 # CONSTANTS
-# Define the pin numbering convention
+
+# Pin Assignments
+# Use the "board" numbering convention for all pin assignments
 GPIO.setmode(GPIO.BOARD)       
 # Button input pins (all wired to GND on other terminal)
 PLUS_BUTTON = 11    # adapt to your wiring
 MINUS_BUTTON = 13   # adapt to your wiring  
 ENTER_BUTTON = 15   # adapt to your wiring
-# Servo ports on the PCA9685
-LINKS_DREH = 0     # Left turn servo
-LINKS_GRIP = 1     # Left grip servo
-RECHTS_DREH = 2    # Right turn servo
-RECHTS_GRIP = 3    # Right grip servo
+# Servo channels on the PCA9685
+LEFT_ROTATE = 0     # Left turn servo
+LEFT_GRIP = 1     # Left grip servo
+RIGHT_ROTATE = 2    # Right turn servo
+RIGHT_GRIP = 3    # Right grip servo
 
+# Servo config
 C180 = 0  # 1 = 180° turn of gripper; else = 90° (standard)
-
 GRIPPER_MAX = 60
 GRIPPER_MIN = 0
 TURN_MAX = 270 #max turn angle of servo - limit for setup
 TURN_MIN = 0
-
 SLEEP_GRIP = 0.3
 SLEEP_LONG_FAKTOR = 2
-
 OVERSHOOT = 0 #overshoot at turning
-
 TURN_MAX_left_grip = 180
 SERVO_PWM_left_grip = 10  # difference of servotiming in percentage of duration 
 SERVO_OFFSET_left_grip = 2 # lower servo position in percentage of duration
-
 TURN_MAX_left_turn = 180
 SERVO_PWM_left_turn = 10  # difference of servotiming in percentage of duration 
 SERVO_OFFSET_left_turn = 2 # lower servo position in percentage of duration
-
 TURN_MAX_right_grip = 180
 SERVO_PWM_right_grip = 10  # difference of servotiming in percentage of duration 
 SERVO_OFFSET_right_grip = 2 # lower servo position in percentage of duration
-
 TURN_MAX_right_turn = 180
 SERVO_PWM_right_turn = 10  # difference of servotiming in percentage of duration 
 SERVO_OFFSET_right_turn = 2 # lower servo position in percentage of duration
 
+# Solver config
 SCRAMBLE_MAX = 20
+TARGET_STANDARD = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB" # Assume the desired state is with all sides correct
 
-IMG_BREITE = 1080 # Width
-IMG_HOEHE = 1080 # Height
-
-top_row_pxl = 250  #values for cube detection
+# Camera config
+IMG_WIDTH = 1080 # Width
+IMG_HEIGHT = 1080 # Height
+top_row_pxl = 250  # Coordinate values for cube detection
 mid_row_pxl = 500
 bot_row_pxl = 750
 lft_col_pxl = 200
 mid_col_pxl = 450
 rgt_col_pxl = 700
-
-wb_row_pxl = 980 #area for white balance
+wb_row_pxl = 980 # Area for white balance
 wb_col_pxl = 890
-
 pxl_locs = [[(lft_col_pxl, top_row_pxl),(mid_col_pxl, top_row_pxl),(rgt_col_pxl, top_row_pxl)],
             [(lft_col_pxl, mid_row_pxl),(mid_col_pxl, mid_row_pxl),(rgt_col_pxl, mid_row_pxl)],
             [(lft_col_pxl, bot_row_pxl),(mid_col_pxl, bot_row_pxl),(rgt_col_pxl, bot_row_pxl)]]
 
-TARGET_STANDARD = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB"
-
-
-
-#____________________globale Variablen___________________________________
-
-state_machine = 0   # 0 = Display Start / Solve
-                    # 1 = Display Setup
-                    # 2 = Display Pattern
-                    # 3 = Display Scramble
-                    # 10 = setup left grip
-                    # 20 = setup left turn 
-                    # 30 = setup right grip 
-                    # 40 = setup right turn
-                    # 50 = setup Load position
-                    # 60 = setup SLEEP (delay) 
-                    # 65 = setup regrip (prior to move a layer)
+# GLOBALS
+state_machine = 0   # 0  = Display Start / Solve
+                    # 1  = Display Setup
+                    # 2  = Display Pattern
+                    # 3  = Display Scramble
+                    # 10 = Setup left grip
+                    # 20 = Setup left turn 
+                    # 30 = Setup right grip 
+                    # 40 = Setup right turn
+                    # 50 = Setup Load position
+                    # 60 = Setup SLEEP (delay) 
+                    # 65 = Setup regrip (prior to move a layer)
                     # 70 = 74 Pattern
-                    # 75 = own Pattern 
-                    # 76 = start own Pattern 
-                    # 77 = scan own Pattern
-                    # 80 = scramble
+                    # 75 = Own Pattern 
+                    # 76 = Start own Pattern 
+                    # 77 = Scan own Pattern
+                    # 80 = Scramble
                     # 98 = Display during scambling
-                    # 99 = running
+                    # 99 = Running
                     
-timer_time = 0   #actual time
+timer_time = 0   # Actual time
   
-l_pos = 90 #position of left Servo
+l_pos = 90 # position of left Servo
 r_pos = 90
 
 left_grip_tune = 0 #adapted in setup
@@ -153,7 +143,7 @@ scramble_count = 0
 
 message = ""
 
- #____________________________________________________timer__________________
+#____________________________________________________Timer__________________
  
 def my_timer():
     global timer_time
@@ -162,7 +152,7 @@ def my_timer():
         timer_time += 0.1
         time.sleep(0.1)
          
-#__________________________________________________________Servos________________________________________________
+#____________________________________________________Servos________________________________________________
      
 
 def setup_servos():
@@ -171,16 +161,14 @@ def setup_servos():
     global right_turn_servo
     global right_grip_servo
     
-#    GPIO.setup(LINKS_DREH, GPIO.OUT)
-#    GPIO.setup(LINKS_GRIP, GPIO.OUT)
-#    GPIO.setup(RECHTS_DREH, GPIO.OUT)
-#    GPIO.setup(RECHTS_GRIP, GPIO.OUT)
-    
-#    left_turn_servo = GPIO.PWM(LINKS_DREH, fPWM) 
-#    left_grip_servo = GPIO.PWM(LINKS_GRIP, fPWM)
-#    right_turn_servo = GPIO.PWM(RECHTS_DREH, fPWM)
-#    right_grip_servo = GPIO.PWM(RECHTS_GRIP, fPWM)
-    
+#    GPIO.setup(LEFT_ROTATE, GPIO.OUT)
+#    GPIO.setup(LEFT_GRIP, GPIO.OUT)
+#    GPIO.setup(RIGHT_ROTATE, GPIO.OUT)
+#    GPIO.setup(RIGHT_GRIP, GPIO.OUT)
+#    left_turn_servo = GPIO.PWM(LEFT_ROTATE, fPWM) 
+#    left_grip_servo = GPIO.PWM(LEFT_GRIP, fPWM)
+#    right_turn_servo = GPIO.PWM(RIGHT_ROTATE, fPWM)
+#    right_grip_servo = GPIO.PWM(RIGHT_GRIP, fPWM)
 #    left_turn_servo.start(7)
 #    left_grip_servo.start(5)
 #    time.sleep(SLEEP)
@@ -188,7 +176,6 @@ def setup_servos():
 #    right_grip_servo.start(5)
 #    time.sleep(SLEEP)
     
-      
 def home_servos():
     global l_pos
     global r_pos
@@ -202,72 +189,70 @@ def home_servos():
     l_pos = 90
     r_pos = 90
 
-
 def regrip():
 	duty = SERVO_PWM_left_grip / TURN_MAX_left_grip * (LOAD + left_grip_tune) + SERVO_OFFSET_left_grip
-	pwm.set_pwm(LINKS_GRIP, 0, int(duty/100*pwm_res))
+	pwm.set_pwm(LEFT_GRIP, 0, int(duty/100*pwm_res))
 #    left_grip_servo.ChangeDutyCycle(duty)
 	duty = SERVO_PWM_right_grip / TURN_MAX_right_grip * (LOAD + right_grip_tune) + SERVO_OFFSET_right_grip
-	pwm.set_pwm(RECHTS_GRIP, 0, int(duty/100*pwm_res))
+	pwm.set_pwm(RIGHT_GRIP, 0, int(duty/100*pwm_res))
 #    right_grip_servo.ChangeDutyCycle(duty)
 	time.sleep(SLEEP/2)
 	duty = SERVO_PWM_left_grip / TURN_MAX_left_grip * left_grip_tune + SERVO_OFFSET_left_grip
-	pwm.set_pwm(LINKS_GRIP, 0, int(duty/100*pwm_res))
+	pwm.set_pwm(LEFT_GRIP, 0, int(duty/100*pwm_res))
 #    left_grip_servo.ChangeDutyCycle(duty)
 	duty = SERVO_PWM_right_grip / TURN_MAX_right_grip * right_grip_tune + SERVO_OFFSET_right_grip
-	pwm.set_pwm(RECHTS_GRIP, 0, int(duty/100*pwm_res))
+	pwm.set_pwm(RIGHT_GRIP, 0, int(duty/100*pwm_res))
 #    right_grip_servo.ChangeDutyCycle(duty)
 	time.sleep(SLEEP/2)
 
 def setDirection_left_turn(direction, faktor): 
 	duty = SERVO_PWM_left_turn / TURN_MAX_left_turn * (direction  + OVERSHOOT) + SERVO_OFFSET_left_turn
-	pwm.set_pwm(LINKS_DREH, 0, int(duty/100*pwm_res))
+	pwm.set_pwm(LEFT_ROTATE, 0, int(duty/100*pwm_res))
 #    left_turn_servo.ChangeDutyCycle(duty)
 	time.sleep(SLEEP*faktor) # allow to settle  
     
 def setDirection_left_grip(direction):
 	duty = SERVO_PWM_left_grip / TURN_MAX_left_grip * direction + SERVO_OFFSET_left_grip
-	pwm.set_pwm(LINKS_GRIP, 0, int(duty/100*pwm_res))
+	pwm.set_pwm(LEFT_GRIP, 0, int(duty/100*pwm_res))
 #    left_grip_servo.ChangeDutyCycle(duty)
 	time.sleep(SLEEP_GRIP) # allow to settle 
 
-    
 def setDirection_right_turn(direction,faktor):
 	duty = SERVO_PWM_right_turn / TURN_MAX_right_turn * (direction  + OVERSHOOT) + SERVO_OFFSET_right_turn
-	pwm.set_pwm(RECHTS_DREH, 0, int(duty/100*pwm_res))
+	pwm.set_pwm(RIGHT_ROTATE, 0, int(duty/100*pwm_res))
 #    right_turn_servo.ChangeDutyCycle(duty)
 	time.sleep(SLEEP*faktor) # allow to settle 
- 
-    
+     
 def setDirection_right_grip(direction):
 	duty = SERVO_PWM_right_grip / TURN_MAX_right_grip * direction + SERVO_OFFSET_right_grip
-	pwm.set_pwm(RECHTS_GRIP, 0, int(duty/100*pwm_res))
+	pwm.set_pwm(RIGHT_GRIP, 0, int(duty/100*pwm_res))
 #    right_grip_servo.ChangeDutyCycle(duty)
 	time.sleep(SLEEP_GRIP) # allow to settle 
 
 
+# Convert macro moves into single action moves of servos
 
-# L: left
-# R: right
-# M: Ebene drehen
-# T: Wuerfel drehen
-# p: plus (Uhrzeigersinn)
-# m: minus
-    
-#A: left Greifer zu
-#a: left Greifer auf
-#B: Rechts Greifer zu
-#b: Rechts Greifer auf
-#M: Links 0
-#N: Links 90
-#O: Links 180
-#X: Rechts 0
-#Y: Rechts 90
-#Z: Rechts 180
+# Input format
+# L: Left
+# R: Right
+# M: Rotate plane
+# T: Rotate cube
+# p: plus (clockwise)
+# m: minus (anti-clockwise)
+
+# Output format
+#A: Left gripper closed
+#a: Left gripper open
+#B: Right gripper closed
+#b: Right gripper open
+#M: Left 0
+#N: Left 90
+#O: Left 180
+#X: Right 0
+#Y: Right 90
+#Z: Right 180
 #R: Regrip
-#t: Zähler count down
-
-# convert macro moves into single action moves of servos
+#t: Counter count down 
     
 def LMp():  #dreht Ebene (move)
     if C180 == 1:
@@ -329,9 +314,8 @@ def RTpp():
     else:
         return "bXBaYAbXBaYA"
 
-    
-#_______________________________________________________solve_moves______________________________________________
 
+#____________________________________Solve_moves______________________________________________
 
 def single_action(action):
     global moves
@@ -405,7 +389,6 @@ def single_action(action):
 
 
 def move_cube(action):
-    
     if action == "U":
         a1 = RTpp()
         a2 =LMp()
@@ -505,7 +488,6 @@ def create_master_string():
     solve_sequenze =""
     
     for y in range(len(solve_array)):
-        
         dummy = move_cube(solve_array[y])
         solve_sequenze = solve_sequenze + dummy  
       
@@ -520,7 +502,7 @@ def create_master_string():
     solve_sequenze = solve_sequenze.replace("MtaNM","Mt")                  #removes redundant gripper turn at 90°   
     solve_sequenze = solve_sequenze.replace("XtbYX","Xt")                  #removes redundant gripper turn at 90°   
     
-#______________________________________________________Drehkorrektur_______________________________________________
+#__________________________Rotation Correction__________________________________________
 
 def correct_right(): #90° turn
     for x in range(len(solve_array)):
@@ -541,8 +523,7 @@ def correct_left():  #180° turn
         solve_array[x] = solve_array[x].replace("X","R")   
 
 
-#__________________________________________________________button__________________________________________________
-
+#__________________________Button__________________________________________________
 
 def setup_button():
     global plus 
@@ -557,7 +538,6 @@ def setup_button():
     plus.addXButtonListener(onButtonEvent_plus)
     minus.addXButtonListener(onButtonEvent_minus)
     enter.addXButtonListener(onButtonEvent_enter)
-
 
 def onButtonEvent_plus(plus, event):
     global state_machine
@@ -646,8 +626,6 @@ def onButtonEvent_plus(plus, event):
             else:
                 scramble_count = scramble_count +1
             
-
-
 def onButtonEvent_minus(minus, event):
     global state_machine
     global left_grip_tune
@@ -829,7 +807,7 @@ def onButtonEvent_enter(enter, event):
                 message = "Start"
                 home_servos()
             except:
-                message = "scan Error"
+                message = "Scan Error"
                 now = 0
                 home_servos()
         elif dummy == 80:
@@ -848,11 +826,9 @@ def onButtonEvent_enter(enter, event):
         if state_machine == 99 or state_machine == 98:
             state_machine = 0
 		   
-#______________________________________________________________________Display__________________________________________
+#___________________________________Display__________________________________________
 
-
-
-def Anzeige():
+def Update_Display():
     global now
     i=0
 #    font = ImageFont.truetype(HOME + 'scripts/font/VCR_OSD_MONO_1.001.ttf',20)
@@ -964,8 +940,7 @@ def Anzeige():
             with canvas(device) as draw:
                 draw.text((5, 0), "Scramble" , font = font, fill="white")
                 draw.text((5, 40), "Count  :" + str(scramble_count), font = font, fill="white")
-            time.sleep(0.1)             
-
+            time.sleep(0.1)
         elif state_machine == 98:
             if isRunning:
                 now = timer_time
@@ -975,9 +950,6 @@ def Anzeige():
                 draw.text((5, 0), "Scramble", font = font, fill="white")
                 draw.text((5, 40), message , font = font, fill="white")
             time.sleep(0.2)
-
-
-             
         elif state_machine == 99:
             if isRunning:
                 now = timer_time
@@ -988,8 +960,7 @@ def Anzeige():
                 draw.text((5, 40), "Time " + "%02d:%02d" % (m,s), font = font, fill="white")
             time.sleep(0.2)
                     
-#__________________________________________________________________Wxrfel einlesen_____________________________________
-
+#__________________________Read Cube_____________________________________
 
 # Sides
 #0 = U
@@ -998,12 +969,11 @@ def Anzeige():
 #3 = D
 #4 = L
 #5 = B
-
 def get_cube():
     regrip()
-    camera.capture(HOME + 'Cube/face1.jpg')
+    camera.capture(HOME + 'Cube/face1.jpg') # Right
 
-#    RTp()
+#   RTp()
     single_action("b")
     single_action("X")
     single_action("B")
@@ -1011,9 +981,9 @@ def get_cube():
     single_action("Y")
     single_action("A")
     regrip()
-    camera.capture(HOME + 'Cube/face2.jpg')    
+    camera.capture(HOME + 'Cube/face2.jpg') # Front   
 
-#    RTp()
+#   RTp()
     single_action("b")
     single_action("X")
     single_action("B")
@@ -1021,9 +991,9 @@ def get_cube():
     single_action("Y")
     single_action("A")
     regrip()
-    camera.capture(HOME + 'Cube/face4.jpg')
+    camera.capture(HOME + 'Cube/face4.jpg') # Left
 
-#    RTp()
+#   RTp()
     single_action("b")
     single_action("X")
     single_action("B")
@@ -1031,16 +1001,16 @@ def get_cube():
     single_action("Y")
     single_action("A")
     regrip()
-    camera.capture(HOME + 'Cube/face5.jpg')
+    camera.capture(HOME + 'Cube/face5.jpg') # Back
 
-#    LTm()      
+#   LTm()      
     single_action("b")
     single_action("M")
     single_action("B")
     single_action("a")
     single_action("N")
     single_action("A")    
-#    RTp()
+#   RTp()
     single_action("b")
     single_action("X")
     single_action("B")
@@ -1048,9 +1018,9 @@ def get_cube():
     single_action("Y")
     single_action("A")
     regrip()
-    camera.capture(HOME + 'Cube/face3.jpg')
+    camera.capture(HOME + 'Cube/face3.jpg') # Bottom
 
-#    RTpp()
+#   RTpp()
     if C180 == 1:
         single_action("b")
         single_action("X")
@@ -1075,9 +1045,9 @@ def get_cube():
         single_action("Y")
         single_action("A")
     regrip()
-    camera.capture(HOME + 'Cube/face0.jpg')
+    camera.capture(HOME + 'Cube/face0.jpg') # Top
 
-#_______________________________________________________________Image_autokorrektur___________________________________
+#_________________________________Image Autocorrect___________________________________
 
 
 def pix_average(im, x,y):
@@ -1094,8 +1064,7 @@ def pix_average(im, x,y):
 
     return r, g, b
 
-#________________________________________________________________Farben_ermitteln________________________________________________________
-
+#__________________________________Detect Colours________________________________________________________
 
 #0 = U
 #1 = R
@@ -1110,12 +1079,11 @@ def get_sticker():
     for i in range(54):
         col_sticker.append('') 
 
-#read center piece and set as color of the side
-
+		#read center piece and set as color of the side
     im = Image.open(HOME + "Cube/face1.jpg")
     im = im.convert('RGB')
     base_R_r, base_R_g, base_R_b = pix_average(im,pxl_locs[1][1][0],pxl_locs[1][1][1])
-    wb_r, wb_g, wb_b = pix_average(im,wb_col_pxl,wb_row_pxl)  # manual white ballance correction
+    wb_r, wb_g, wb_b = pix_average(im,wb_col_pxl,wb_row_pxl)  # manual white balance correction
     print("%6.2f %6.2f %6.2f   " % (wb_r, wb_g, wb_b) + " R")
     base_R_r = base_R_r / wb_r * 255
     base_R_g = base_R_g / wb_g * 255
@@ -1205,8 +1173,9 @@ def get_sticker():
                 #set cubie face as that color
 
                 col_sticker[img_iter * 9 + 3*y_iter + x_iter] = color
-        
-#Korrektur oben      //sticker are not in correct order due to movements at reading the cube
+
+		# Some stickers are not in the correct order due to movements made when reading the cube   
+		# Correction above
     dummy_1 = col_sticker[0]   
     dummy_2 = col_sticker[1]
     col_sticker[0] = col_sticker[6]
@@ -1217,8 +1186,7 @@ def get_sticker():
     col_sticker[7] = col_sticker[5]
     col_sticker[2] = dummy_1
     col_sticker[5] = dummy_2  
- 
-# Korrektur unten
+		# Correction below
     dummy_1 = col_sticker[27]   
     dummy_2 = col_sticker[28]
     col_sticker[27] = col_sticker[33]
@@ -1237,7 +1205,7 @@ def get_sticker():
     print(masterstring)
     return masterstring
 
-#____________________________________________________________________Main_________________________________________________
+#______________________Setup_________________________________________________
 
 def setup():
     global left_grip_tune
@@ -1299,7 +1267,7 @@ def setup():
         f.write(str(regrip_stat)+ "\n")
         f.close()
         print("Default saved")
-        return False  #During the first run, all servos are set to 0 so that the arms can be mounted correctly 
+        return False  # During the first run, all servos are set to 0 so that the arms can be mounted correctly 
 
 #_________________________________________Scan_cube_Own_Pattern________________________________
 
@@ -1322,7 +1290,7 @@ def scan_cube():
     except:
         raise  
 
-#____________________________________________scramble______________________________________________
+#____________________________________________Scramble______________________________________________
         
 def scramble():
     global moves
@@ -1352,8 +1320,7 @@ def scramble():
     for x in solve_sequenze:
         single_action(x)
         message = "Rest: " + str(moves)
-        if state_machine == 0:  #DOUBLECLICK auf rightbutton
-
+        if state_machine == 0:  # DOUBLECLICK with rightbutton
             break        
     message = "Start"
     now = 0
@@ -1361,8 +1328,9 @@ def scramble():
 
 #__________________________________________Main_______________________________________________
 
+# Startup the camera
 camera = PiCamera()
-camera.resolution = (IMG_BREITE, IMG_HOEHE)
+camera.resolution = (IMG_WIDTH, IMG_HEIGHT)
 camera.exposure_mode = 'auto'
 camera.start_preview()
 time.sleep(2)
@@ -1372,18 +1340,15 @@ setup()
 now = 0
 move_count = 0
 
-t = Thread(target=Anzeige)
+# Start the display and timer on separate threads
+t = Thread(target = Update_Display)
 t.start()
-
-s = Thread(target=my_timer)
+s = Thread(target = my_timer)
 s.start()
 
-#
 isRunning = False
-
 timer_time = 0
 message = "Start "
-
 state_machine = 0
 endless = 1
 
@@ -1394,7 +1359,7 @@ while endless == 1:
 
     solve_sequenze=""
    
-    while state_machine != 99:   #warten bis "start"
+    while state_machine != 99:   # Wait until "start"
         i=1
     
     setDirection_left_grip(left_grip_tune)
@@ -1411,7 +1376,6 @@ while endless == 1:
     
     solution = get_sticker()
 
-#    else:
     try:
         if Target_string == TARGET_STANDARD:
             solve_string = kociemba.solve(solution)
@@ -1436,7 +1400,7 @@ while endless == 1:
     for x in solve_sequenze:
         single_action(x)
         message = "Rest: " + str(moves)
-        if state_machine == 0:  #DOUBLECLICK auf rightbutton
+        if state_machine == 0:  #DOUBLECLICK with rightbutton
             message = "Start"
             now = 0
             break
